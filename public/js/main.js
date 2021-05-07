@@ -1,16 +1,34 @@
 const chatForm = document.getElementById('chat-form')
-const socket = io("ws://localhost:3000");
+const jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJsdW1lbi1qd3QiLCJpZCI6MjgsImxhc3RfbG9naW4iOiIyMDE5LTEwLTE1IDE5OjMzOjA3IiwibmFtZSI6Ijg4ODg4Iiwiand0X2NyZWF0ZWRfYXQiOjE1NzExNDI3OTksImp3dF9leHAiOjE4ODY1MDI3OTl9.LyFhGdPvv8koLbkghTUhSjZhUqY41RJ2TybWexXUvqU";
+const socket = io("ws://localhost:3000",{
+    auth: {
+        jwtToken: jwtToken
+    }
+  });
 // const socket = io();
 const chatMessage = document.getElementById('messageArea')
 const roomName = document.getElementById('room-name')
 const usersLists = document.getElementById('users')
 const oldMessages = document.getElementById('oldMessage')
 
+
+const ad = parseJwt(jwtToken)
+
 // get query string
 const {username, room} = Qs.parse(location.search,{
     ignoreQueryPrefix: true
 })
 
+// listener on error
+// client-side
+socket.on("connect_error", (err) => {
+    // console.log(err instanceof Error); // true
+    // console.log('ini connect error',err.message); // prints the message associated with the error
+    // console.log(err.data); // { content: "Please retry later" }
+    if(err instanceof Error){
+        alert(`websocket error: ${err.message}`)
+    }
+  });
 
 // join chatroom
 socket.emit('joinRoom', {username, room})
@@ -45,14 +63,25 @@ chatForm.addEventListener('submit', (e) => {
     e.target.elements.msg.focus()
 })
 
+
+function parseJwt (token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+};
+
 // output message to dom
 function outputMessage(message) {
     console.log('message ini', message)
     const div = document.createElement('div')
     div.classList.add('message')
     div.innerHTML = `
-    <div class="${message.username === username ? 'mr-2' : 'ml-2'} mt-1 d-flex align-items-${message.username === username ? 'end' : 'start'} flex-column bd-highlight">
-    <div class="alert alert-${message.username === username ? 'success' : 'info'}" role="alert" style="max-width: 200px; min-width: 200px;">
+    <div class="${message.username === username ? 'mr-1' : 'ml-1'} mt-1 d-flex align-items-${message.username === username ? 'end w-100' : 'start w-75'} flex-column bd-highlight">
+    <div class="alert alert-${message.username === username ? 'success' : 'info'}" role="alert" >
     <h6 class="alert-heading">${message.username} - ${message.time}</h6>
     ${message.text}
     </div>
@@ -70,8 +99,8 @@ function outputOldMessage(messages) {
         messages.map( message => {
             console.log('ini msg loop', message)
             return (`
-        <div class="${message.username === username ? 'mr-2' : 'ml-2'} mt-1 d-flex align-items-${message.username === username ? 'end' : 'start'} flex-column bd-highlight">
-    <div class="alert alert-${message.username === username ? 'success' : 'info'}" role="alert" style="max-width: 200px; min-width: 200px;">
+        <div class="${message.username === username ? 'mr-1' : 'ml-1'} mt-1 d-flex align-items-${message.username === username ? 'end w-100' : 'start w-75'} flex-column bd-highlight">
+    <div class="alert alert-${message.username === username ? 'success' : 'info'}" role="alert" >
     <h6 class="alert-heading">${message.username} - ${message.time}</h6>
     ${message.message}
     </div>

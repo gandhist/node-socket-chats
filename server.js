@@ -1,22 +1,66 @@
 const path = require('path')
 const http = require('http')
+const cors = require('cors')
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const socketio = require('socket.io')
-const formatMessage = require('./utils/messages')
+const bodyParser = require('body-parser');
+
+
+// config db
 const db = require('./config/db.config')
 
-const {getCurrentUser, userjoin, userLeave, getRoomUsers} = require('./utils/users')
+// utils format messages
+const formatMessage = require('./utils/messages')
+
+const {getCurrentUser, userjoin, userLeave, getRoomUsers} = require('./utils/users');
+const router = require('./config/routes');
 
 const app = express();
+// var allowlist = ['http://localhost:5500/', 'http://127.0.0.1:5500/']
+
+// const options = {
+//     cors : {
+//     origin: allowlist
+//         }
+// };
+// app.use(cors(options));
 const server = http.createServer(app)
 const io = socketio(server)
-
 const chatBot = "🤖Raven"
 
-// set static folder
+// set static folder for development purpose only
 app.use(express.static(path.join(__dirname, 'public')))
 
-// run when client connectrs
+
+// socket middleware
+// expected auth{jwtToken: ''} from client
+io.use((socket, next) => {
+    try {
+        // verify jwt from client with secretKey
+        const decoded = jwt.verify(socket.handshake.auth.jwtToken, "fq2uEI1j8zXcnICVlHrGXpr1UJje2p9a", (err, decoded) => {
+            if(typeof decoded === 'object') return true // if json verified will return true
+            return false
+        })
+        // console.log('ini middleware', decoded)
+        if(decoded) {
+            // if json verified will process next request
+            // console.log('ini middleware valid')
+            next()
+        }
+        else {
+            // console.log('ini middleware tidak valid')
+            next(new Error('invalid request'))
+        }
+    } catch (error) {
+        next(new Error("token invalid"));
+        console.log('error middleware nih', error)
+    }
+    
+})
+
+
+// run when client connect
 io.on('connection', socket => {
 
     // listener for joinRoom chat
@@ -47,7 +91,6 @@ io.on('connection', socket => {
             WHERE a.group_name = '${user.room}'
             `;
             db.query(query, function(err, res){
-                console.log('data', res)
                 db.query(`select send_by as username, message, inserted_at as time from groups_chats where group_id = '${user.room}'`, function(errx, resx){
                     io.to(user.room).emit('roomUsers', {
                         room: user.room,
@@ -108,10 +151,9 @@ io.on('connection', socket => {
 })
 
 // route login
-app.post('login', (req, res) => {
-    console.log('yeah')
-    res.send('here we go')
-})
+app.use(bodyParser.json()) // for parsing application/json
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use('/api/v1', router)
 
 
 const PORT = 3000 || process.env.PORT;
