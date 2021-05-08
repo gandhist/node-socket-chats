@@ -5,8 +5,9 @@ const saltRounds = 10;
 
 const login = (req, res) => {
     // UserModel.login()
+    console.log('req body',req.body)
     if(!req.body.username || !req.body.password){
-        res.status(422).json({error: 'error', message: 'lengkapi data'})
+        res.status(422).json({error: 'error', message: 'username dan password tidak boleh kosong'})
     }
 
     // cek user in table 

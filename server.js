@@ -17,14 +17,14 @@ const {getCurrentUser, userjoin, userLeave, getRoomUsers} = require('./utils/use
 const router = require('./config/routes');
 
 const app = express();
-// var allowlist = ['http://localhost:5500/', 'http://127.0.0.1:5500/']
+var allowlist = ['http://localhost:5500/', 'http://127.0.0.1:5500/']
 
-// const options = {
-//     cors : {
-//     origin: allowlist
-//         }
-// };
-// app.use(cors(options));
+const options = {
+    cors : {
+    origin: allowlist
+        }
+};
+app.use(cors(options));
 const server = http.createServer(app)
 const io = socketio(server)
 const chatBot = "🤖Raven"
@@ -150,12 +150,18 @@ io.on('connection', socket => {
 
 })
 
+// var allowCrossDomain = function(req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*"); // allow requests from any other server
+//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'); // allow these verbs
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Cache-Control");
+// }
+//     app.use(allowCrossDomain);
 // route login
 app.use(bodyParser.json()) // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true }))
+// app.use(bodyParser.urlencoded({ extended: true }))
 app.use('/api/v1', router)
 
 
-const PORT = 3000 || process.env.PORT;
+const PORT = 5000 || process.env.PORT;
 
 server.listen(PORT, () => console.log(`server running on port ${PORT}`));
