@@ -6,14 +6,14 @@ const mysql = require('mysql');
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'gandhi13',
     database: 'pjk3'
 };
 
 const dbConn = mysql.createConnection(dbConfig)
 
-dbConn.connect(function(err) {
-    if(err){
+dbConn.connect(function (err) {
+    if (err) {
         console.log('error while connecting to db..')
         throw err
     }

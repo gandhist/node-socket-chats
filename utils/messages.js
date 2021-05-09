@@ -1,9 +1,14 @@
 const moment = require('moment')
 
 
-function formatMessage(username, text) {
+function formatMessage(send_by = '', username, text, type_message = '', group_id = '', time = moment().format('h:mm a')) {
     return {
-        username, text, time: moment().format('h:mm a')
+        send_by: send_by,
+        username: username,
+        message: text,
+        type_message: type_message,
+        group_id: group_id,
+        time: time
     }
 }
 
