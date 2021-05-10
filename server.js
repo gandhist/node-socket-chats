@@ -16,7 +16,7 @@ const db = require('./config/db.config')
 // utils format messages
 const formatMessage = require('./utils/messages')
 
-const { getCurrentUser, userjoin, userLeave, getRoomUsers } = require('./utils/users');
+const { userLeave } = require('./utils/users'); // IMPORTANT, WE WILL IGNORE IT
 const router = require('./config/routes');
 
 const app = express();
@@ -48,15 +48,6 @@ io.use((socket, next) => {
         // console.log('ini middleware', decoded)
         if (decoded) {
             // if json verified will process next request
-            // {
-            //     exp: 1620590630,
-            //     id: 41,
-            //     name: 'stich',
-            //     tipe_user: 'peserta',
-            //     email: 'bollox@gmail.com',
-            //     no_hp: '025652',
-            //     iat: 1620374630
-            //   }
             socket.userToken = jwt.decode(socket.handshake.auth.jwtToken)
             next()
         }
@@ -66,37 +57,32 @@ io.use((socket, next) => {
         }
     } catch (error) {
         next(new Error("token invalid"));
-        console.log('error middleware nih', error)
+        ('error middleware nih', error)
     }
 
 })
 
 
-// run when client connect
+// run when client connect / just login
 io.on('connection', socket => {
+
+    //TODO:
+    // set user to be online
+
     // listener for joinRoom chat
     socket.on('joinRoom', ({ username, room }) => {
-
-        // store user login to db / memory
-        const user = userjoin(socket.id, username, room)
-
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
 
         // welcome current user
-
         socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s introduce yourself first.!', null, room))
 
         // broadcas when user connect to selected room
-        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined to Chat App!!`, null, room))
+        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined the room!!`, null, room))
 
         // send user and room info
         // so in ui must listen "roomUsers"
-        // io.to(user.room).emit('roomUsers', {
-        //     room: user.room,
-        //     users: getRoomUsers(user.room)
-        // })
         const query = `
             SELECT a.user_chat_id AS id, b.name AS username, a.group_name AS room FROM users_groups_chats a
             LEFT JOIN users_chats b ON a.user_chat_id = b.id
@@ -116,43 +102,30 @@ io.on('connection', socket => {
 
     // lister for chatMessage
     socket.on('chatMessage', ({ msg, username, room }) => {
-        console.log('ini dari server', msg)
-        const user = getCurrentUser(socket.id);
-
         // save chat to db
         const query = `
             insert into groups_chats (send_by, message, group_id) values ('${username}', '${msg}', '${room}')
             `;
         db.query(query, function (err, res) {
-            console.log('data', res)
-            console.log('emmit ke room ', room)
-            console.log('username ', username)
-
+            // emit to the room
             io.to(room).emit('message', formatMessage(username, username, msg, null, room))
         })
-        // emit message to client / target
-        // io.to(room).emit('message',formatMessage(username, msg) )
     })
 
-    // run on when client disconnect
+    // run on when client disconnect / leave the page
     socket.on('disconnect', () => {
+        console.log('someone leave group')
         const user = userLeave(socket.id)
         if (user) {
             console.log('someone leave this room')
-            io.to(user.room).emit('message', formatMessage(socket.userToken.id, chatBot, `${user.username} has left the chat!`, null))
+            io.to(user.room).emit('message', formatMessage(socket.userToken.id, chatBot, `${user.username} has left room!`, null))
             // send user and room info
-            // so in ui must listen "roomUsers"
-            // io.to(user.room).emit('roomUsers', {
-            //     room: user.room,
-            //     users: getRoomUsers(user.room)
-            // })
             const query = `
             SELECT a.user_chat_id AS id, b.name AS username, a.group_name AS room FROM users_groups_chats a
             LEFT JOIN users_chats b ON a.user_chat_id = b.id
             WHERE a.group_name = '${user.room}'
             `;
             db.query(query, function (err, res) {
-                console.log('data', res)
                 io.to(user.room).emit('roomUsers', {
                     room: user.room,
                     users: res
@@ -173,7 +146,7 @@ io.on('connection', socket => {
 //     app.use(allowCrossDomain);
 // route login
 app.use(bodyParser.json()) // for parsing application/json
-// app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({ extended: true }))
 app.use('/api/v1', router)
 
 

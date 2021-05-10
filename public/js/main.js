@@ -41,9 +41,6 @@ socket.on('message', message => {
 
 // LISTENER 
 socket.on('roomUsers', ({room, users, message}) => {
-    console.log('room',room)
-    console.log('users',users)
-    console.log('messages ',message)
     // manipulate dom html
     outputOldMessage(message)
     outputRoomName(room)
@@ -97,7 +94,6 @@ function outputOldMessage(messages) {
     let chat = 
     `${
         messages.map( message => {
-            console.log('ini msg loop', message)
             return (`
         <div class="${message.username === username ? 'mr-1' : 'ml-1'} mt-1 d-flex align-items-${message.username === username ? 'end w-100' : 'start w-75'} flex-column bd-highlight">
     <div class="alert alert-${message.username === username ? 'success' : 'info'}" role="alert" >
@@ -109,7 +105,6 @@ function outputOldMessage(messages) {
         } 
             ).join('')
     }`
-    console.log('is ghcat', oldMessages)
     oldMessages.innerHTML = chat
     // console.log('message lama ini', message)
 }
@@ -121,6 +116,5 @@ function outputRoomName(room){
 
 //output user in the room
 function outputUser(users){
-    console.log('bentuk users', users)
     usersLists.innerHTML = `${users.map(user => `<li class="list-group-item list-group-item-light">${user.username}</li>`).join('')}`
 }

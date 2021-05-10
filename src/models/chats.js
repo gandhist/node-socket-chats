@@ -10,7 +10,6 @@ INNER JOIN users_chats b ON a.send_by = b.id
  WHERE a.group_id = ?
     `, group, function (err, res) {
         if (err) {
-            console.log('error saat get data chatting', err)
             result(err, null)
         }
         else {

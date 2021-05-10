@@ -17,6 +17,9 @@ const login = (req, res) => {
         if (errs) {
             res.send(errs);
         }
+        if(ress.length === 0){
+            res.status(422).json({ error: 'error', message: 'username tidak ditemukan' })
+        }
         const cekPassword = bcrypt.compareSync(req.body.password, ress[0].password);
         if (!req.body.username || !req.body.password) {
             res.status(422).json({ error: 'error', message: 'lengkapi data' })
