@@ -30,7 +30,6 @@ const getRoomUsers = async (room) => {
     WHERE a.group_name = '${room}'
     `;
     db.query(query, function(err, res){
-        console.log('data', JSON.parse(res))
         return res
     })
     return users.filter(user => user.room === room);

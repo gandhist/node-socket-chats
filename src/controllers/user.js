@@ -9,7 +9,7 @@ dotenv.config();
 const login = (req, res) => {
     // UserModel.login()
     if (!req.body.username || !req.body.password) {
-        res.status(422).json({ error: 'error', message: 'username dan password tidak boleh kosong' })
+        return res.status(422).send({ error: 'error', message: 'username dan password tidak boleh kosong' })
     }
 
     // cek user in table 
@@ -17,21 +17,23 @@ const login = (req, res) => {
         if (errs) {
             res.send(errs);
         }
+        
         if(ress.length === 0){
-            res.status(422).json({ error: 'error', message: 'username tidak ditemukan' })
+            res.status(422).send({ status: false, message: 'username tidak ditemukan' })
         }
-        const cekPassword = bcrypt.compareSync(req.body.password, ress[0].password);
-        if (!req.body.username || !req.body.password) {
-            res.status(422).json({ error: 'error', message: 'lengkapi data' })
+        else if(ress.length > 0){
+            const cekPassword = bcrypt.compareSync(req.body.password, ress[0].password);
+        
+            if (!cekPassword) {
+                // salah
+                res.status(422).send({ status: false, message: 'password salah' })
+            }
+            else {
+                delete ress[0].password
+                res.status(200).send({ status: true, message: "berhasil login!", data: ress[0] });
+            }
         }
-        if (!cekPassword) {
-            // salah
-            res.status(422).json({ error: 'error', message: 'password salah' })
-        }
-        else {
-            delete ress[0].password
-            res.status(200).json({ error: false, message: "berhasil login!", data: ress[0] });
-        }
+        
         // UserModel.login({username: req.body.username}, function(err, login){
         //     if (err){
         //         res.send(err);
@@ -43,22 +45,39 @@ const login = (req, res) => {
 
 }
 
-const register = (req, res) => {
-    // validasi
-    const password = bcrypt.hashSync(req.body.password, saltRounds);
+const _validasi = (req, arrayField) => {
+    let err = [];
+    arrayField.forEach(el => {
+        if(req.body?.[el] === undefined || req.body?.[el] === ""){
+            err = [...err, {error: `${el} tidak boleh kosong`}]
+        }
+    });
+    return err;
+}
 
-    const newUser = new UserModel({ ...req.body, hint: req.body.password, password: password });
+const register = (req, res) => {
+    
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-        res.status(400).send({ error: true, message: 'Please provide all required field' });
+        return res.status(400).send({ status: true, message: 'Please provide all required field' });
     }
-    else {
+
+    // validasi
+    const listValidasiRegister = ['name','email','no_hp','tipe_user','password'];
+    const checkEmptyForm = _validasi(req, listValidasiRegister)
+    if(checkEmptyForm.length > 0){
+        res.status(422).send({ status: true, message: 'data yang diberikan tidak lengkap', errors: checkEmptyForm });
+    }
+    
+    // else {
+        const password = bcrypt.hashSync(req.body.password, saltRounds);
+        const newUser = new UserModel({ ...req.body, hint: req.body.password, password: password });
         UserModel.register(newUser, function (err, user) {
             if (err) {
                 res.send(err);
             }
             // generate token
             const token = jwt.sign({
-                exp: Math.floor(Date.now() / 1000) + (3600 * 60),
+                exp: Math.floor(Date.now() / 1000) + (3600 * (60 * 400)), // 4tahun expired time
                 id: user,
                 name: req.body.name,
                 tipe_user: req.body.tipe_user,
@@ -71,12 +90,12 @@ const register = (req, res) => {
                     res.send(errs);
                 }
                 if (ress.affectedRows === 1) {
-                    res.status(200).json({ token });
+                    res.status(200).json({ status: true, message: 'Registrasi berhasil' });
                 }
             })
             // res.status(200).json(user);
         })
-    }
+    // }
 }
 
 
