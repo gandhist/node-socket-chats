@@ -65,7 +65,7 @@ const register = (req, res) => {
     const listValidasiRegister = ['name','email','no_hp','tipe_user','password'];
     const checkEmptyForm = _validasi(req, listValidasiRegister)
     if(checkEmptyForm.length > 0){
-        res.status(422).send({ status: true, message: 'data yang diberikan tidak lengkap', errors: checkEmptyForm });
+        res.status(422).send({ status: false, message: 'data yang diberikan tidak lengkap', errors: checkEmptyForm });
     }
     
     // else {

@@ -53,11 +53,13 @@ io.use((socket, next) => {
         }
         else {
             // console.log('ini middleware tidak valid')
-            next(new Error('invalid request'))
+            const err = new Error("not authorized");
+            err.data = { content: "Please retry later, perhaps your token invalid" };
+            next(err)
         }
     } catch (error) {
         next(new Error("token invalid"));
-        ('error middleware nih', error)
+        console.log('error middleware nih', error)
     }
 
 })
