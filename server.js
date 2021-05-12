@@ -73,15 +73,16 @@ io.on('connection', socket => {
 
     // listener for joinRoom chat
     socket.on('joinRoom', ({ username, room }) => {
+        console.log(`${username} join room ${room}`)
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
 
         // welcome current user
-        socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s introduce yourself first.!', null, room))
+        socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s introduce yourself first.!', null, room, room))
 
         // broadcas when user connect to selected room
-        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined the room!!`, null, room))
+        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined the room ${room}!!`, null, room, room))
 
         // send user and room info
         // so in ui must listen "roomUsers"
@@ -103,24 +104,34 @@ io.on('connection', socket => {
     })
 
     // lister for chatMessage
-    socket.on('chatMessage', ({ msg, username, room }) => {
+    socket.on('chatMessage', ({ msg, username, room, tipe, targetId }) => {
+        // console.log(`${username} said ${msg} in room ${room}`)
         // save chat to db
-        const query = `
+        let query = "";
+        if (tipe === 'group') {
+            query = `
             insert into groups_chats (send_by, message, group_id) values ('${username}', '${msg}', '${room}')
             `;
+        }
+        else if (tipe === 'pc') {
+            query = `
+            insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${room}')
+            `;
+        }
+
         db.query(query, function (err, res) {
             // emit to the room
-            io.to(room).emit('message', formatMessage(username, username, msg, null, room))
+            io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
         })
     })
 
     // run on when client disconnect / leave the page
     socket.on('disconnect', () => {
-        console.log('someone leave group')
+        // console.log('someone leave group')
         const user = userLeave(socket.id)
         if (user) {
             console.log('someone leave this room')
-            io.to(user.room).emit('message', formatMessage(socket.userToken.id, chatBot, `${user.username} has left room!`, null))
+            io.to(user.room).emit('message', formatMessage(socket.userToken.id, chatBot, `${user.username} has left room!`, null, null))
             // send user and room info
             const query = `
             SELECT a.user_chat_id AS id, b.name AS username, a.group_name AS room FROM users_groups_chats a

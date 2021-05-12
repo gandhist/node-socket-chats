@@ -10,7 +10,7 @@ const router = express.Router()
 router.post('/login', userController.login)
 router.post('/register', userController.register)
 router.get('/groupList', authenticateToken, groupController.list)
-router.get('/getChat/:id', authenticateToken, chatController.list)
+router.get('/getChat/:tipe/:id', authenticateToken, chatController.list)
 router.post('/getMeta', authenticateToken, chatController.getMeta)
 router.get('/contacts', authenticateToken, contactController.getAll)
 
