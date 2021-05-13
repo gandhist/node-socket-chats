@@ -67,7 +67,7 @@ io.use((socket, next) => {
 
 // run when client connect / just login
 io.on('connection', socket => {
-    const userId = socket.userToken.id
+    let userId = socket.userToken.id
     // console.log(`${socket.userToken.name} established connection`)
     //TODO:
     // set user to be online
@@ -75,27 +75,32 @@ io.on('connection', socket => {
 
     // join the connected user to room who id itself
     // it mean for client sent message/notif to spesific user
-
+    // const users = [];
+    // for (let [id, socket] of io.of("/").sockets) {
+    //     users.push({
+    //         userID: id,
+    //         username: socket.userToken.name,
+    //         id: socket.userToken.id,
+    //     });
+    // }
+    socket.join(`pm${socket.userToken.id}`)
+    io.to(`pm${socket.userToken.id}`).emit('message', formatMessage(null, chatBot, 'ini target id', null, socket.userToken.id, socket.userToken.id))
+    // console.log('list user', users)
 
 
 
     // listener for joinRoom chat
-    socket.on('joinRoom', ({ username, room, targetId }) => {
-        // console.log(`${username} join room ${room} target ${targetId}`)
+    socket.on('joinRoom', ({ username, room, tipe, targetId }) => {
+        console.log(`${username} join room ${room} tipe ${tipe} target ${targetId}`)
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
-        // if (targetId > 0) {
-        //     console.log('dak ke sini')
-        //     console.log(`${username} join room target ${targetId}`)
-        //     socket.join(targetId)
-        // }
 
         // welcome current user
-        socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s talk now!', null, room, room))
+        io.to(`pm${targetId}`).emit('message', formatMessage(null, chatBot, `${username}, Welcome to Chat App, let\'s talk now! `, null, room, room))
 
         // broadcas when user connect to selected room
-        socket.broadcast.to(room).to(targetId).emit('message', formatMessage(null, chatBot, `${username} has joined the room ${room}!!`, null, room, room))
+        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined the room ${room}!!`, null, room, room))
 
         // send user and room info
         // so in ui must listen "roomUsers"
@@ -118,21 +123,27 @@ io.on('connection', socket => {
 
     // lister for chatMessage
     socket.on('chatMessage', ({ msg, username, room, tipe, targetId }) => {
-        // console.log(username)
 
         // save chat to db
         let query = "";
         if (tipe === 'group') {
+
             query = `
             insert into groups_chats (send_by, message, group_id) values ('${username}', '${msg}', '${room}')
             `;
             db.query(query, function (err, res) {
-                // emit to the room and room user itself
-                io.to(room).to(targetId).emit('message', formatMessage(username, username, msg, null, room, room))
+                db.query(`select user_chat_id from users_groups_chats where group_id = ? `, room, function (err, resp) {
+                    // member group 
+                    // const member = resp.map((el) => `pm${el.id}`) 
+                    resp.forEach((el) => {
+                        io.to(`pm${el.user_chat_id}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                    })
+                    // emit to the room and room user itself
+                    // io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
+                })
             })
         }
         else if (tipe === 'pc') {
-            console.log(`${socket.userToken.name} join group ${targetId}`)
             // check if data exist in table if not, just insert new one
             const idRelasi = [
                 `${username}_${targetId}`,
@@ -170,7 +181,7 @@ io.on('connection', socket => {
                     `;
                 db.query(query, function (err, res) {
                     // emit to the room and room user itself
-                    io.to(room).to(targetId).emit('message', formatMessage(username, username, msg, null, room, room))
+                    io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                 })
             })
         }
