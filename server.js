@@ -67,22 +67,35 @@ io.use((socket, next) => {
 
 // run when client connect / just login
 io.on('connection', socket => {
-
+    const userId = socket.userToken.id
+    // console.log(`${socket.userToken.name} established connection`)
     //TODO:
     // set user to be online
 
+
+    // join the connected user to room who id itself
+    // it mean for client sent message/notif to spesific user
+
+
+
+
     // listener for joinRoom chat
-    socket.on('joinRoom', ({ username, room }) => {
-        console.log(`${username} join room ${room}`)
+    socket.on('joinRoom', ({ username, room, targetId }) => {
+        // console.log(`${username} join room ${room} target ${targetId}`)
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
+        // if (targetId > 0) {
+        //     console.log('dak ke sini')
+        //     console.log(`${username} join room target ${targetId}`)
+        //     socket.join(targetId)
+        // }
 
         // welcome current user
-        socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s introduce yourself first.!', null, room, room))
+        socket.emit('message', formatMessage(null, chatBot, 'Welcome to Chat App, let\'s talk now!', null, room, room))
 
         // broadcas when user connect to selected room
-        socket.broadcast.to(room).emit('message', formatMessage(null, chatBot, `${username} has joined the room ${room}!!`, null, room, room))
+        socket.broadcast.to(room).to(targetId).emit('message', formatMessage(null, chatBot, `${username} has joined the room ${room}!!`, null, room, room))
 
         // send user and room info
         // so in ui must listen "roomUsers"
@@ -105,47 +118,68 @@ io.on('connection', socket => {
 
     // lister for chatMessage
     socket.on('chatMessage', ({ msg, username, room, tipe, targetId }) => {
-        // console.log(`${username} said ${msg} in room ${room}`)
+        // console.log(username)
+
         // save chat to db
         let query = "";
         if (tipe === 'group') {
             query = `
             insert into groups_chats (send_by, message, group_id) values ('${username}', '${msg}', '${room}')
             `;
+            db.query(query, function (err, res) {
+                // emit to the room and room user itself
+                io.to(room).to(targetId).emit('message', formatMessage(username, username, msg, null, room, room))
+            })
         }
         else if (tipe === 'pc') {
-            query = `
-            insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${room}')
-            `;
-        }
+            console.log(`${socket.userToken.name} join group ${targetId}`)
+            // check if data exist in table if not, just insert new one
+            const idRelasi = [
+                `${username}_${targetId}`,
+                `${targetId}_${username}`,
+            ];
 
-        db.query(query, function (err, res) {
-            // emit to the room
-            io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
-        })
-    })
-
-    // run on when client disconnect / leave the page
-    socket.on('disconnect', () => {
-        // console.log('someone leave group')
-        const user = userLeave(socket.id)
-        if (user) {
-            console.log('someone leave this room')
-            io.to(user.room).emit('message', formatMessage(socket.userToken.id, chatBot, `${user.username} has left room!`, null, null))
-            // send user and room info
-            const query = `
-            SELECT a.user_chat_id AS id, b.name AS username, a.group_name AS room FROM users_groups_chats a
-            LEFT JOIN users_chats b ON a.user_chat_id = b.id
-            WHERE a.group_name = '${user.room}'
-            `;
-            db.query(query, function (err, res) {
-                io.to(user.room).emit('roomUsers', {
-                    room: user.room,
-                    users: res
+            // check riwayat chat sebelumnya
+            db.query(`select * from personal_chats where id_relasi in (?,?) limit 1`, idRelasi, function (err, res) {
+                // jika tidak ada chat sebelumnya maka
+                if (res.length === 0) {
+                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
+                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                    // jika tidak ada history chat maka buat query untuk insert data baru
+                    query = `
+                        insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${room}')
+                    `;
+                }
+                // jika ada chat sebelumnya, maka check ada di user personal atau tidak
+                db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [username, targetId], function (err, resp) {
+                    // jika tidak ada chat 
+                    if (resp.length === 0) {
+                        db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
+                    }
+                })
+                // jika ada chat sebelumnya, maka check ada di user personal atau tidak
+                db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [targetId, username], function (err, resp) {
+                    // jika tidak ada chat 
+                    if (resp.length === 0) {
+                        db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                    }
+                })
+                // jika ada chat sebelumnya select query
+                query = `
+                        insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}')
+                    `;
+                db.query(query, function (err, res) {
+                    // emit to the room and room user itself
+                    io.to(room).to(targetId).emit('message', formatMessage(username, username, msg, null, room, room))
                 })
             })
         }
 
+    })
+
+    // run on when client disconnect / leave the page
+    socket.on('disconnect', (reason) => {
+        // console.log(`${socket.userToken.name} disconnect reason: ${reason}`)
     })
 
 
