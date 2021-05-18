@@ -35,15 +35,13 @@ var allowCrossDomain = (req, res, next) => {
 app.use(allowCrossDomain);
 const server = http.createServer(app)
 const io = socketio(server, {
-    cors: {
-      origin: "http://localhost:3000",
-      methods: ["GET", "POST"]
+    cors:{
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"]
     }
 })
 const chatBot = "🤖Raven"
 
-// set static folder for development purpose only
-// app.use(express.static(path.join(__dirname, 'public')))
 
 
 // socket middleware
