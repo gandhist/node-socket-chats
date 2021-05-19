@@ -1,4 +1,3 @@
-const path = require('path')
 const http = require('http')
 const cors = require('cors')
 const express = require('express');
@@ -16,11 +15,10 @@ const db = require('./config/db.config')
 // utils format messages
 const formatMessage = require('./utils/messages')
 
-const { userLeave } = require('./utils/users'); // IMPORTANT, WE WILL IGNORE IT
 const router = require('./config/routes');
 
 const app = express();
-var allowlist = ['http://localhost:5500/', 'http://127.0.0.1:5500/']
+var allowlist = ['http://localhost:3000/', 'http://127.0.0.1:3000/']
 
 const options = {
     cors: {
@@ -28,12 +26,22 @@ const options = {
     }
 };
 app.use(cors(options));
+var allowCrossDomain = (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*"); // allow requests from any other server
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'); // allow these verbs
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Cache-Control");
+    next()
+}   
+app.use(allowCrossDomain);
 const server = http.createServer(app)
-const io = socketio(server)
+const io = socketio(server, {
+    cors:{
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"]
+    }
+})
 const chatBot = "🤖Raven"
 
-// set static folder for development purpose only
-app.use(express.static(path.join(__dirname, 'public')))
 
 
 // socket middleware
@@ -75,23 +83,12 @@ io.on('connection', socket => {
 
     // join the connected user to room who id itself
     // it mean for client sent message/notif to spesific user
-    // const users = [];
-    // for (let [id, socket] of io.of("/").sockets) {
-    //     users.push({
-    //         userID: id,
-    //         username: socket.userToken.name,
-    //         id: socket.userToken.id,
-    //     });
-    // }
     socket.join(`pm${socket.userToken.id}`)
     io.to(`pm${socket.userToken.id}`).emit('message', formatMessage(null, chatBot, 'ini target id', null, socket.userToken.id, socket.userToken.id))
     // console.log('list user', users)
 
-
-
     // listener for joinRoom chat
     socket.on('joinRoom', ({ username, room, tipe, targetId }) => {
-        console.log(`${username} join room ${room} tipe ${tipe} target ${targetId}`)
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
@@ -160,29 +157,36 @@ io.on('connection', socket => {
                     query = `
                         insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${room}')
                     `;
+                    db.query(query, function (err, res) {
+                        // emit to the room and room user itself
+                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                    })
                 }
-                // jika ada chat sebelumnya, maka check ada di user personal atau tidak
-                db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [username, targetId], function (err, resp) {
-                    // jika tidak ada chat 
-                    if (resp.length === 0) {
-                        db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
-                    }
-                })
-                // jika ada chat sebelumnya, maka check ada di user personal atau tidak
-                db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [targetId, username], function (err, resp) {
-                    // jika tidak ada chat 
-                    if (resp.length === 0) {
-                        db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
-                    }
-                })
-                // jika ada chat sebelumnya select query
-                query = `
-                        insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}')
-                    `;
-                db.query(query, function (err, res) {
-                    // emit to the room and room user itself
-                    io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
-                })
+                else {
+                    // jika ada chat sebelumnya, maka check ada di user personal atau tidak
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [username, targetId], function (err, resp) {
+                        // jika tidak ada chat 
+                        if (resp.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
+                        }
+                    })
+                    // jika ada chat sebelumnya, maka check ada di user personal atau tidak
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [targetId, username], function (err, resp) {
+                        // jika tidak ada chat 
+                        if (resp.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                        }
+                    })
+                    // jika ada chat sebelumnya select query
+                    query = `
+                            insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}')
+                        `;
+                    db.query(query, function (err, res) {
+                        // emit to the room and room user itself
+                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                    })
+                }
+                
             })
         }
 
@@ -190,18 +194,15 @@ io.on('connection', socket => {
 
     // run on when client disconnect / leave the page
     socket.on('disconnect', (reason) => {
+        //TODO:
+        //1 set user to offline
         // console.log(`${socket.userToken.name} disconnect reason: ${reason}`)
     })
 
 
 })
 
-// var allowCrossDomain = function(req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*"); // allow requests from any other server
-//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'); // allow these verbs
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Cache-Control");
-// }
-//     app.use(allowCrossDomain);
+
 // route login
 app.use(bodyParser.json()) // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }))

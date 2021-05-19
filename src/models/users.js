@@ -9,6 +9,7 @@ let User = function (user) {
     this.hint = user.hint
     this.password = user.password
     this.token = user.token
+    this.picture = user.picture
 }
 
 
