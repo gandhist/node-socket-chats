@@ -7,7 +7,6 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const login = (req, res) => {
-    // UserModel.login()
     if (!req.body.username || !req.body.password) {
         return res.status(422).send({ error: 'error', message: 'username dan password tidak boleh kosong' })
     }
@@ -33,13 +32,6 @@ const login = (req, res) => {
                 res.status(200).send({ status: true, message: "berhasil login!", data: ress[0] });
             }
         }
-
-        // UserModel.login({username: req.body.username}, function(err, login){
-        //     if (err){
-        //         res.send(err);
-        //     }
-        //    
-        // })
     })
 
 
@@ -73,7 +65,7 @@ const register = (req, res) => {
     const newUser = new UserModel({ ...req.body, hint: req.body.password, password: password });
     UserModel.register(newUser, function (err, user) {
         if (err) {
-            res.send(err);
+            return res.send(err);
         }
         // generate token
         const token = jwt.sign({

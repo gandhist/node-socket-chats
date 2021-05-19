@@ -11,32 +11,22 @@ let User = function (user) {
     this.token = user.token
 }
 
-User.login = function(user, result){
-    dbConn.query(`select * from users_chats where email = ? limit 1`, user.username, function(err, res){
-        if(err){
-            result(err, null)
-        }
-        else {
-            result(null, res)
-        }
-    })
-}
+
 
 User.getByEmail = function (email, result) {
-    const a = dbConn.query(`select id, name, email, no_hp, tipe_user, token, password, picture from users_chats where email = ? limit 1`, email, function(err, res){
-        if(err){
+    dbConn.query(`select id, name, email, no_hp, tipe_user, token, password, picture from users_chats where email = ? limit 1`, email, function (err, res) {
+        if (err) {
             result(err, null)
         }
         else {
             result(null, res)
         }
     })
-    return a;
 }
 
-User.register = function(newUser, result){
-    dbConn.query(`insert into users_chats set ?`, newUser, function(err, res){
-        if(err){
+User.register = function (newUser, result) {
+    dbConn.query(`insert into users_chats set ?`, newUser, function (err, res) {
+        if (err) {
             result(err, null)
         }
         else {
@@ -45,9 +35,9 @@ User.register = function(newUser, result){
     })
 }
 
-User.updateJwt = function(body, result){
-    dbConn.query(`update users_chats set token = ? where id = ?`, [body.token, body.id], function(err, res){
-        if(err){
+User.updateJwt = function (body, result) {
+    dbConn.query(`update users_chats set token = ? where id = ?`, [body.token, body.id], function (err, res) {
+        if (err) {
             result(err, null)
         }
         else {
@@ -56,16 +46,15 @@ User.updateJwt = function(body, result){
     })
 }
 
-User.getAll = function(result){
-    const a = dbConn.query(`select id, name, email, no_hp, tipe_user, picture from users_chats order by name`, function(err, res){
-        if(err){
+User.getAll = function (result) {
+    dbConn.query(`select id, name, email, no_hp, tipe_user, picture from users_chats order by name`, function (err, res) {
+        if (err) {
             result(err, null)
         }
         else {
             result(null, res)
         }
     })
-    return a;
 }
 
 module.exports = User
