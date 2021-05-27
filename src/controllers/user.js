@@ -14,10 +14,11 @@ const login = (req, res) => {
     // cek user in table 
     UserModel.getByEmail(req.body.username, function (errs, ress) {
         if (errs) {
+            console.log(errs)
             res.send(errs);
         }
 
-        if (ress.length === 0) {
+        if (ress && ress.length === 0) {
             res.status(422).send({ status: false, message: 'username tidak ditemukan' })
         }
         else if (ress.length > 0) {

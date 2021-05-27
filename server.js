@@ -5,6 +5,9 @@ const jwt = require('jsonwebtoken');
 const socketio = require('socket.io')
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const moment = require('moment');
+let logger = require('morgan')
+
 // get config vars
 dotenv.config();
 
@@ -25,6 +28,7 @@ const options = {
         origin: allowlist
     }
 };
+app.use(logger('dev'))
 app.use(cors(options));
 var allowCrossDomain = (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*"); // allow requests from any other server
@@ -37,7 +41,7 @@ const server = http.createServer(app)
 const io = socketio(server, {
     cors:{
         origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST", "OPTIONS"]
     }
 })
 const chatBot = "🤖Raven"
@@ -126,7 +130,7 @@ io.on('connection', socket => {
         if (tipe === 'group') {
 
             query = `
-            insert into groups_chats (send_by, message, group_id) values ('${username}', '${msg}', '${room}')
+            insert into groups_chats (send_by, message, group_id, inserted_at) values ('${username}', '${msg}', '${room}', ${moment.utc().valueOf()})
             `;
             db.query(query, function (err, res) {
                 db.query(`select user_chat_id from users_groups_chats where group_id = ? `, room, function (err, resp) {
@@ -155,7 +159,7 @@ io.on('connection', socket => {
                     db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
                     // jika tidak ada history chat maka buat query untuk insert data baru
                     query = `
-                        insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${room}')
+                        insert into personal_chats (send_by, message, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${targetId}', '${room}', ${moment.utc().valueOf()})
                     `;
                     db.query(query, function (err, res) {
                         // emit to the room and room user itself
@@ -179,7 +183,7 @@ io.on('connection', socket => {
                     })
                     // jika ada chat sebelumnya select query
                     query = `
-                            insert into personal_chats (send_by, message, target_id, id_relasi) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}')
+                            insert into personal_chats (send_by, message, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}', ${moment.utc().valueOf()})
                         `;
                     db.query(query, function (err, res) {
                         // emit to the room and room user itself
