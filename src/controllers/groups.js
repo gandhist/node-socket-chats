@@ -12,8 +12,13 @@ const list = (req, res) => {
         if (err) {
             res.send(err);
         }
-        res.status(200).json({ message: "group list!", data: resp });
+        res.status(200).json({
+            message: "group list!",
+            data: resp
+        });
     })
 }
 
-module.exports = { list }
+module.exports = {
+    list
+}

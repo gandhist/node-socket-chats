@@ -14,5 +14,8 @@ router.get('/getChat/:tipe/:id', authenticateToken, chatController.list)
 router.post('/getMeta', authenticateToken, chatController.getMeta)
 router.get('/contacts', authenticateToken, contactController.getAll)
 
+router.get('/tokenFirebase', authenticateToken, userController.getToken)
+router.post('/tokenFirebase', authenticateToken, userController.setToken)
+
 
 module.exports = router

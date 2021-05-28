@@ -35,11 +35,11 @@ var allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'); // allow these verbs
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Cache-Control");
     next()
-}   
+}
 app.use(allowCrossDomain);
 const server = http.createServer(app)
 const io = socketio(server, {
-    cors:{
+    cors: {
         origin: "http://localhost:3000",
         methods: ["GET", "POST", "OPTIONS"]
     }
@@ -62,11 +62,12 @@ io.use((socket, next) => {
             // if json verified will process next request
             socket.userToken = jwt.decode(socket.handshake.auth.jwtToken)
             next()
-        }
-        else {
+        } else {
             // console.log('ini middleware tidak valid')
             const err = new Error("not authorized");
-            err.data = { content: "Please retry later, perhaps your token invalid" };
+            err.data = {
+                content: "Please retry later, perhaps your token invalid"
+            };
             next(err)
         }
     } catch (error) {
@@ -92,7 +93,12 @@ io.on('connection', socket => {
     // console.log('list user', users)
 
     // listener for joinRoom chat
-    socket.on('joinRoom', ({ username, room, tipe, targetId }) => {
+    socket.on('joinRoom', ({
+        username,
+        room,
+        tipe,
+        targetId
+    }) => {
         // fungsi dari socketio untuk join ke prameter name nya
         // pada case ini peserta kita masukan ke room yang di pilih nya
         socket.join(room)
@@ -123,7 +129,16 @@ io.on('connection', socket => {
     })
 
     // lister for chatMessage
-    socket.on('chatMessage', ({ msg, username, room, tipe, targetId }) => {
+    socket.on('chatMessage', ({
+        msg,
+        username,
+        room,
+        tipe,
+        targetId
+    }) => {
+
+        // Ngambil token_fb target
+
 
         // save chat to db
         let query = "";
@@ -143,8 +158,7 @@ io.on('connection', socket => {
                     // io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
                 })
             })
-        }
-        else if (tipe === 'pc') {
+        } else if (tipe === 'pc') {
             // check if data exist in table if not, just insert new one
             const idRelasi = [
                 `${username}_${targetId}`,
@@ -165,8 +179,7 @@ io.on('connection', socket => {
                         // emit to the room and room user itself
                         io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                     })
-                }
-                else {
+                } else {
                     // jika ada chat sebelumnya, maka check ada di user personal atau tidak
                     db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ? limit 1`, [username, targetId], function (err, resp) {
                         // jika tidak ada chat 
@@ -190,9 +203,10 @@ io.on('connection', socket => {
                         io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                     })
                 }
-                
             })
         }
+
+        // Eksekusi ke Firebase
 
     })
 
@@ -209,9 +223,10 @@ io.on('connection', socket => {
 
 // route login
 app.use(bodyParser.json()) // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({
+    extended: true
+}))
 app.use('/api/v1', router)
-
 
 const PORT = 5000 || process.env.PORT;
 
