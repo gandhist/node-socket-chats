@@ -6,7 +6,14 @@ const socketio = require('socket.io')
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const moment = require('moment');
-let logger = require('morgan')
+let logger = require('morgan');
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./p3sm-chat-firebase-adminsdk-dyp1f-22841d2a49.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 // get config vars
 dotenv.config();
@@ -19,6 +26,7 @@ const db = require('./config/db.config')
 const formatMessage = require('./utils/messages')
 
 const router = require('./config/routes');
+const { ConsoleMessage } = require('puppeteer');
 
 const app = express();
 var allowlist = ['http://localhost:3000/', 'http://127.0.0.1:3000/']
@@ -147,6 +155,51 @@ io.on('connection', socket => {
             query = `
             insert into groups_chats (send_by, message, group_id, inserted_at) values ('${username}', '${msg}', '${room}', ${moment.utc().valueOf()})
             `;
+
+            db.query(
+                `select users_chats.token_firebase from users_chats join users_groups_chats on users_groups_chats.user_chat_id = users_chats.id where users_groups_chats.group_id = ? and users_chats.id != ?`, [room, username], function (err, resp) {
+                    let tokens = []
+                    if (err) {
+                        console.log(err)
+                    } else { 
+                        console.log(resp)
+                        resp.forEach((el) => {
+                            if (el.token_firebase) {
+                                tokens.push(el.token_firebase)
+                            }
+                        })
+                    }
+
+                    if (tokens.length > 0) {
+                        try {
+                            db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
+                                const registrationTokens = tokens;
+    
+                                const message = {
+                                    notification: {
+                                        title: res_sender[0].name,
+                                        body: msg
+                                    },
+                                    tokens: registrationTokens,
+                                };
+    
+                                admin.messaging().sendMulticast(message)
+                                .then((response) => {
+                                    console.log(response.successCount + ' messages were sent successfully');
+                                    console.log(response)
+    
+                                    if(!response.responses[0].success) {
+                                        console.log(response.responses[0].error)
+                                    }
+                                });
+                            })
+                        } catch (error) {
+                            console.log(error)
+                        }
+
+                    }
+                })
+
             db.query(query, function (err, res) {
                 db.query(`select user_chat_id from users_groups_chats where group_id = ? `, room, function (err, resp) {
                     // member group 
@@ -168,6 +221,7 @@ io.on('connection', socket => {
             // check riwayat chat sebelumnya
             db.query(`select * from personal_chats where id_relasi in (?,?) limit 1`, idRelasi, function (err, res) {
                 // jika tidak ada chat sebelumnya maka
+
                 if (res.length === 0) {
                     db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
                     db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
@@ -200,9 +254,43 @@ io.on('connection', socket => {
                         `;
                     db.query(query, function (err, res) {
                         // emit to the room and room user itself
+
                         io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                     })
                 }
+                
+                db.query(`select token_firebase,name from users_chats where id = ? limit 1`, targetId, function (err, res_token) {
+                    // jika tidak ada chat
+                    if(!err) {
+                        try {
+                            const registrationTokens = [
+                                res_token[0].token_firebase
+                            ];
+    
+                            console.log(res_token[0].name)
+
+                            const message = {
+                                notification: {
+                                    title: res_token[0].name,
+                                    body: msg
+                                },
+                                tokens: registrationTokens,
+                            };
+    
+                            admin.messaging().sendMulticast(message)
+                            .then((response) => {
+                                console.log(response.successCount + ' messages were sent successfully');
+                                console.log(response)
+
+                                if(!response.responses[0].success) {
+                                    console.log(response.responses[0].error)
+                                }
+                            });
+                        } catch (error) {
+                            console.log(error)
+                        }
+                    }
+                })
             })
         }
 
