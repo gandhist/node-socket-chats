@@ -26,7 +26,6 @@ const db = require('./config/db.config')
 const formatMessage = require('./utils/messages')
 
 const router = require('./config/routes');
-const { ConsoleMessage } = require('puppeteer');
 
 const app = express();
 var allowlist = ['http://localhost:3000/', 'http://127.0.0.1:3000/']
