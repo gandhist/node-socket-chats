@@ -258,33 +258,33 @@ io.on('connection', socket => {
                     })
                 }
                 
-                db.query(`select token_firebase,name from users_chats where id = ? limit 1`, targetId, function (err, res_token) {
+                db.query(`select token_firebase from users_chats where id = ? limit 1`, targetId, function (err, res_token) {
                     // jika tidak ada chat
                     if(!err) {
                         try {
-                            const registrationTokens = [
-                                res_token[0].token_firebase
-                            ];
-    
-                            console.log(res_token[0].name)
+                            db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
+                                const registrationTokens = [
+                                    res_token[0].token_firebase
+                                ];
 
-                            const message = {
-                                notification: {
-                                    title: res_token[0].name,
-                                    body: msg
-                                },
-                                tokens: registrationTokens,
-                            };
-    
-                            admin.messaging().sendMulticast(message)
-                            .then((response) => {
-                                console.log(response.successCount + ' messages were sent successfully');
-                                console.log(response)
+                                const message = {
+                                    notification: {
+                                        title: res_sender[0].name,
+                                        body: msg
+                                    },
+                                    tokens: registrationTokens,
+                                };
+        
+                                admin.messaging().sendMulticast(message)
+                                .then((response) => {
+                                    console.log(response.successCount + ' messages were sent successfully');
+                                    console.log(response)
 
-                                if(!response.responses[0].success) {
-                                    console.log(response.responses[0].error)
-                                }
-                            });
+                                    if(!response.responses[0].success) {
+                                        console.log(response.responses[0].error)
+                                    }
+                                });
+                            })
                         } catch (error) {
                             console.log(error)
                         }
