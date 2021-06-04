@@ -66,7 +66,7 @@ INNER JOIN users_chats b ON a.send_by = b.id
 }
 
 
-Chats.pc = function (sender_id, target_id, limit, result) {
+Chats.pc_load = function (sender_id, target_id, limit, result) {
     if (limit === null) {
         limit = 0
     }
