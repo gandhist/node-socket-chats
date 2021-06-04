@@ -28,6 +28,29 @@ const list = (req, res) => {
 
 }
 
+const lazy_list = (req, res) => {
+    const { id, tipe } = req.params;
+    const { limit } = req.body;
+    const user = req.user;
+    if (tipe === 'group') {
+        ChatModel.group(id, limit, (err, resp) => {
+            if (err) {
+                res.send(err);
+            }
+            res.status(200).json({ message: "chat group ditemukan", data: resp });
+        })
+    }
+    else if (tipe === 'pc') {
+        ChatModel.pc(user, id, limit, (err, resp) => {
+            if (err) {
+                res.send(err);
+            }
+            res.status(200).json({ message: "chat pc ditemukan", data: resp });
+        })
+    }
+
+}
+
 const getMeta = (req, res) => {
     const { url } = req.body
     if (url === "" || url === undefined) {
@@ -43,4 +66,4 @@ const getMeta = (req, res) => {
     })
 }
 
-module.exports = { list, getMeta }
+module.exports = { list, getMeta, lazy_list }

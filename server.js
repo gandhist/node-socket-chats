@@ -14,7 +14,6 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-
 // get config vars
 dotenv.config();
 
@@ -91,6 +90,7 @@ io.on('connection', socket => {
     // console.log(`${socket.userToken.name} established connection`)
     //TODO:
     // set user to be online
+
 
 
     // join the connected user to room who id itself

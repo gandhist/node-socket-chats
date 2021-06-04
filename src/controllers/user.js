@@ -46,7 +46,6 @@ const login = (req, res) => {
         }
     })
 
-
 }
 
 const _validasi = (req, arrayField) => {
