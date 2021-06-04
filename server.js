@@ -6,12 +6,12 @@ const socketio = require('socket.io')
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const moment = require('moment');
-let logger = require('morgan');
-var admin = require("firebase-admin");
+const logger = require('morgan');
+const admin = require("firebase-admin");
 
-var serviceAccount = require("./p3sm-chat-firebase-adminsdk-dyp1f-22841d2a49.json");
+const serviceAccount = require("./p3sm-chat-firebase-adminsdk-dyp1f-22841d2a49.json");
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 
 
@@ -156,11 +156,12 @@ io.on('connection', socket => {
             `;
 
             db.query(
-                `select users_chats.token_firebase from users_chats join users_groups_chats on users_groups_chats.user_chat_id = users_chats.id where users_groups_chats.group_id = ? and users_chats.id != ?`, [room, username], function (err, resp) {
+                `select users_chats.token_firebase from users_chats join users_groups_chats on users_groups_chats.user_chat_id = users_chats.id where users_groups_chats.group_id = ? and users_chats.id != ?`, [room, username],
+                function (err, resp) {
                     let tokens = []
                     if (err) {
                         console.log(err)
-                    } else { 
+                    } else {
                         console.log(resp)
                         resp.forEach((el) => {
                             if (el.token_firebase) {
@@ -173,7 +174,7 @@ io.on('connection', socket => {
                         try {
                             db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
                                 const registrationTokens = tokens;
-    
+
                                 const message = {
                                     notification: {
                                         title: res_sender[0].name,
@@ -181,16 +182,16 @@ io.on('connection', socket => {
                                     },
                                     tokens: registrationTokens,
                                 };
-    
+
                                 admin.messaging().sendMulticast(message)
-                                .then((response) => {
-                                    console.log(response.successCount + ' messages were sent successfully');
-                                    console.log(response)
-    
-                                    if(!response.responses[0].success) {
-                                        console.log(response.responses[0].error)
-                                    }
-                                });
+                                    .then((response) => {
+                                        console.log(response.successCount + ' messages were sent successfully');
+                                        console.log(response)
+
+                                        if (!response.responses[0].success) {
+                                            console.log(response.responses[0].error)
+                                        }
+                                    });
                             })
                         } catch (error) {
                             console.log(error)
@@ -257,10 +258,10 @@ io.on('connection', socket => {
                         io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                     })
                 }
-                
+
                 db.query(`select token_firebase from users_chats where id = ? limit 1`, targetId, function (err, res_token) {
                     // jika tidak ada chat
-                    if(!err) {
+                    if (!err) {
                         try {
                             db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
                                 const registrationTokens = [
@@ -274,16 +275,16 @@ io.on('connection', socket => {
                                     },
                                     tokens: registrationTokens,
                                 };
-        
-                                admin.messaging().sendMulticast(message)
-                                .then((response) => {
-                                    console.log(response.successCount + ' messages were sent successfully');
-                                    console.log(response)
 
-                                    if(!response.responses[0].success) {
-                                        console.log(response.responses[0].error)
-                                    }
-                                });
+                                admin.messaging().sendMulticast(message)
+                                    .then((response) => {
+                                        console.log(response.successCount + ' messages were sent successfully');
+                                        console.log(response)
+
+                                        if (!response.responses[0].success) {
+                                            console.log(response.responses[0].error)
+                                        }
+                                    });
                             })
                         } catch (error) {
                             console.log(error)
