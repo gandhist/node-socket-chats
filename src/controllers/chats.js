@@ -33,19 +33,19 @@ const lazy_list = (req, res) => {
     const { limit } = req.body;
     const user = req.user;
     if (tipe === 'group') {
-        ChatModel.group(id, limit, (err, resp) => {
+        ChatModel.group_load(id, limit, (err, resp) => {
             if (err) {
-                res.send(err);
+                return res.send(err);
             }
-            res.status(200).json({ message: "chat group ditemukan", data: resp });
+            return res.status(200).json({ message: "chat group ditemukan", data: resp });
         })
     }
     else if (tipe === 'pc') {
-        ChatModel.pc(user, id, limit, (err, resp) => {
+        ChatModel.pc_load(user, id, limit, (err, resp) => {
             if (err) {
-                res.send(err);
+                return res.send(err);
             }
-            res.status(200).json({ message: "chat pc ditemukan", data: resp });
+            return res.status(200).json({ message: "chat pc ditemukan", data: resp });
         })
     }
 
