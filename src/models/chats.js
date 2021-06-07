@@ -48,7 +48,7 @@ Chats.pc = function (sender_id, target_id, result) {
 
 
 Chats.group_load = function (group, limit, result) {
-    if (limit === null) {
+    if (limit === null || typeof limit == 'undefined') {
         limit = 0
     }
     const a = dbConn.query(`
@@ -67,7 +67,7 @@ Chats.group_load = function (group, limit, result) {
 
 
 Chats.pc_load = function (sender_id, target_id, limit, result) {
-    if (limit === null) {
+    if (limit === null || typeof limit == 'undefined') {
         limit = 0
     }
     const idRelasi = [
