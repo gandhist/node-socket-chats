@@ -22,7 +22,7 @@ const login = (req, res) => {
         }
 
         if (ress && ress.length === 0) {
-            res.status(422).send({
+            return res.status(422).send({
                 status: false,
                 message: 'username tidak ditemukan'
             })
@@ -37,7 +37,7 @@ const login = (req, res) => {
                 })
             } else {
                 delete ress[0].password
-                res.status(200).send({
+                return res.status(200).send({
                     status: true,
                     message: "berhasil login!",
                     data: ress[0]
@@ -45,7 +45,6 @@ const login = (req, res) => {
             }
         }
     })
-
 
 }
 
@@ -74,7 +73,7 @@ const register = (req, res) => {
     const listValidasiRegister = ['name', 'email', 'no_hp', 'tipe_user', 'password'];
     const checkEmptyForm = _validasi(req, listValidasiRegister)
     if (checkEmptyForm.length > 0) {
-        res.status(422).send({
+        return res.status(422).send({
             status: false,
             message: 'data yang diberikan tidak lengkap',
             errors: checkEmptyForm
@@ -127,7 +126,7 @@ const setToken = (req, res) => {
     const { token } = req.body
     const checkEmptyForm = _validasi(req, listValidasiToken)
     if (checkEmptyForm.length > 0) {
-        res.status(422).send({
+        return res.status(422).send({
             status: false,
             message: 'data yang diberikan tidak lengkap',
             errors: checkEmptyForm
@@ -138,10 +137,10 @@ const setToken = (req, res) => {
         token, 
         function (errs, ress) {
         if (errs) {
-            res.send(errs);
+            return res.send(errs);
         }
         if (ress.affectedRows === 1) {
-            res.status(200).json({
+            return res.status(200).json({
                 status: true,
                 message: 'Update Token Firebase berhasil'
             });
@@ -152,9 +151,9 @@ const setToken = (req, res) => {
 const getToken = (req, res) => {
     UserModel.getTokenFirebase(req.user.id, (err, resp) => {
         if (err) {
-            res.send(err);
+            return res.send(err);
         }
-        res.status(200).json({
+        return res.status(200).json({
             message: "Token Firebase",
             data: resp[0].token_firebase
         });
