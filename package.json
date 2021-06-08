@@ -11,11 +11,14 @@
   "author": "Gandhist",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/storage": "^5.8.5",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
+    "buffer-to-uint8array": "^1.1.0",
     "cors": "^2.8.5",
     "dotenv": "^9.0.0",
     "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
     "firebase": "^8.6.3",
     "firebase-admin": "^9.9.0",
     "jsonwebtoken": "^8.5.1",
@@ -23,7 +26,8 @@
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "open-graph-scraper": "^4.8.2",
-    "socket.io": "^4.0.1"
+    "socket.io": "^4.0.1",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"

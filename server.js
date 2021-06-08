@@ -8,14 +8,16 @@ const dotenv = require('dotenv');
 const moment = require('moment');
 const logger = require('morgan');
 const admin = require("firebase-admin");
+const fileUpload = require('express-fileupload');
 
-const serviceAccount = require("./p3sm-chat-firebase-adminsdk-dyp1f-22841d2a49.json");
+// get config vars
+dotenv.config();
+
+const serviceAccount = require("./" + process.env.FIREBASE_JSON_FILE);
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-// get config vars
-dotenv.config();
 
 
 // config db
@@ -50,6 +52,9 @@ const io = socketio(server, {
         methods: ["GET", "POST", "OPTIONS"]
     }
 })
+app.use(fileUpload({
+    createParentPath: true
+}));
 const chatBot = "🤖Raven"
 
 
