@@ -33,7 +33,7 @@ const image = async (req, res) => {
             let tipe_lampiran = lampiran.mimetype.split('/')[0]
             
             if (tipe_lampiran == 'image') {
-                let filename = "USER_UPLOAD_" + user.id + new Date().valueOf() + "." + extension
+                let filename = "USER_UPLOAD_" + user.id + "_" + new Date().valueOf() + "." + extension
                 let desti = __dirname + "/../../tmp/" + filename
                 lampiran.mv(desti)
                 let uploading = await storage.bucket('csi-absensi').upload(desti, {
@@ -43,13 +43,17 @@ const image = async (req, res) => {
                 fs.unlinkSync(desti)
 
                 if (uploading) {
-                    query = `insert into media (file_name, extension, uri, size, created_at, created_by) values ('${filename}', '${extension}', '${uploading[0].metadata.mediaLink}', '${uploading[0].metadata.size}', "${moment.utc().format('YYYY-MM-DD HH:mm:ss')}", ${user.id})`;
+                    let uri = "https://storage.googleapis.com/" + uploading[0].metadata.bucket + "/" + uploading[0].metadata.name
+                    query = `insert into media (file_name, extension, uri, download_uri, size, created_at, created_by) values ('${filename}', '${extension}', '${uri}', '${uploading[0].metadata.mediaLink}', '${uploading[0].metadata.size}', "${moment.utc().format('YYYY-MM-DD HH:mm:ss')}", ${user.id})`;
         
                     db.query(query);
 
                     return res.send({
                         status: true,
-                        message: uploading[0].metadata.mediaLink
+                        message: {
+                            uri :uri, 
+                            donwload_uri :uploading[0].metadata.mediaLink
+                        }
                     });
                 }
 
