@@ -47,12 +47,13 @@ const image = async (req, res) => {
                     query = `insert into media (file_name, extension, uri, download_uri, size, created_at, created_by) values ('${filename}', '${extension}', '${uri}', '${uploading[0].metadata.mediaLink}', '${uploading[0].metadata.size}', "${moment.utc().format('YYYY-MM-DD HH:mm:ss')}", ${user.id})`;
         
                     db.query(query);
-
+                    
                     return res.send({
                         status: true,
                         message: {
                             uri :uri, 
-                            donwload_uri :uploading[0].metadata.mediaLink
+                            donwload_uri :uploading[0].metadata.mediaLink,
+                            type: uploading[0].metadata.contentType
                         }
                     });
                 }

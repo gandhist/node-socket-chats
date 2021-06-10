@@ -146,18 +146,16 @@ io.on('connection', socket => {
         username,
         room,
         tipe,
+        type,
+        media,
         targetId
     }) => {
-
-        // Ngambil token_fb target
-
-
         // save chat to db
         let query = "";
         if (tipe === 'group') {
 
             query = `
-            insert into groups_chats (send_by, message, group_id, inserted_at) values ('${username}', '${msg}', '${room}', ${moment.utc().valueOf()})
+            insert into groups_chats (send_by, message, type_message, media, group_id, inserted_at) values ('${username}', '${msg}', '${type}', '${media}', '${room}', ${moment.utc().valueOf()})
             `;
 
             db.query(
@@ -210,7 +208,7 @@ io.on('connection', socket => {
                     // member group 
                     // const member = resp.map((el) => `pm${el.id}`) 
                     resp.forEach((el) => {
-                        io.to(`pm${el.user_chat_id}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                        io.to(`pm${el.user_chat_id}`).emit('message', formatMessage(username, username, msg, type, media, null, room, room))
                     })
                     // emit to the room and room user itself
                     // io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
@@ -255,12 +253,12 @@ io.on('connection', socket => {
                     })
                     // jika ada chat sebelumnya select query
                     query = `
-                            insert into personal_chats (send_by, message, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}', ${moment.utc().valueOf()})
+                            insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${type}', '${media}', '${targetId}', '${res[0].id_relasi}', ${moment.utc().valueOf()})
                         `;
                     db.query(query, function (err, res) {
                         // emit to the room and room user itself
 
-                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, type, media, null, room, room))
                     })
                 }
 
@@ -298,8 +296,6 @@ io.on('connection', socket => {
                 })
             })
         }
-
-        // Eksekusi ke Firebase
 
     })
 
