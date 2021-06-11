@@ -37,7 +37,7 @@ const image = async (req, res) => {
                 let desti = __dirname + "/../../tmp/" + filename
                 lampiran.mv(desti)
                 let uploading = await storage.bucket('csi-absensi').upload(desti, {
-                    destination: "chat/" + filename,
+                    destination: "chat/images/" + filename,
                     resumable:false 
                 });
                 fs.unlinkSync(desti)
