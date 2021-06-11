@@ -270,8 +270,8 @@ io.on('connection', socket => {
                                 const registrationTokens = [
                                     res_token[0].token_firebase
                                 ];
-                                
-                                if (registrationTokens.length > 0) {
+
+                                if (registrationTokens) {
                                     const message = {
                                         notification: {
                                             title: res_sender[0].name,
