@@ -271,15 +271,16 @@ io.on('connection', socket => {
                                     res_token[0].token_firebase
                                 ];
 
-                                const message = {
-                                    notification: {
-                                        title: res_sender[0].name,
-                                        body: msg
-                                    },
-                                    tokens: registrationTokens,
-                                };
-
-                                admin.messaging().sendMulticast(message)
+                                if (res_token[0].token_firebase) {
+                                    const message = {
+                                        notification: {
+                                            title: res_sender[0].name,
+                                            body: msg
+                                        },
+                                        tokens: registrationTokens,
+                                    };
+    
+                                    admin.messaging().sendMulticast(message)
                                     .then((response) => {
                                         console.log(response.successCount + ' messages were sent successfully');
                                         console.log(response)
@@ -288,6 +289,7 @@ io.on('connection', socket => {
                                             console.log(response.responses[0].error)
                                         }
                                     });
+                                }
                             })
                         } catch (error) {
                             console.log(error)
