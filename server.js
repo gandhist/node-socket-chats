@@ -226,8 +226,20 @@ io.on('connection', socket => {
                 // jika tidak ada chat sebelumnya maka
 
                 if (res.length === 0) {
-                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
-                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ?`, [username, targetId], function (err, v_room) {
+                        // Validasi if exist room
+                        if (v_room.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
+                        }
+                    })
+
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ?`, [targetId, username], function (err, v_room) {
+                        // Validasi if exist room
+                        if (v_room.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                        }
+                    })
+
                     // jika tidak ada history chat maka buat query untuk insert data baru
                     query = `
                         insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
