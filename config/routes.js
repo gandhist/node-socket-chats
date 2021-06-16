@@ -17,6 +17,7 @@ router.post('/getMeta', authenticateToken, chatController.getMeta)
 router.get('/contacts', authenticateToken, contactController.getAll)
 
 router.post('/uploads/image',authenticateToken, uploadController.image)
+router.post('/uploads/document',authenticateToken, uploadController.document)
 
 router.get('/tokenFirebase', authenticateToken, userController.getToken)
 router.post('/tokenFirebase', authenticateToken, userController.setToken)
