@@ -6,17 +6,18 @@ const socketio = require('socket.io')
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const moment = require('moment');
-let logger = require('morgan');
-var admin = require("firebase-admin");
-
-var serviceAccount = require("./p3sm-chat-firebase-adminsdk-dyp1f-22841d2a49.json");
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
+const logger = require('morgan');
+const admin = require("firebase-admin");
+const fileUpload = require('express-fileupload');
 
 // get config vars
 dotenv.config();
+
+const serviceAccount = require("./" + process.env.FIREBASE_JSON_FILE);
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
 
 
 // config db
@@ -51,6 +52,9 @@ const io = socketio(server, {
         methods: ["GET", "POST", "OPTIONS"]
     }
 })
+app.use(fileUpload({
+    createParentPath: true
+}));
 const chatBot = "🤖Raven"
 
 
@@ -91,6 +95,7 @@ io.on('connection', socket => {
     // console.log(`${socket.userToken.name} established connection`)
     //TODO:
     // set user to be online
+
 
 
     // join the connected user to room who id itself
@@ -141,26 +146,25 @@ io.on('connection', socket => {
         username,
         room,
         tipe,
+        type,
+        media,
         targetId
     }) => {
-
-        // Ngambil token_fb target
-
-
         // save chat to db
         let query = "";
         if (tipe === 'group') {
 
             query = `
-            insert into groups_chats (send_by, message, group_id, inserted_at) values ('${username}', '${msg}', '${room}', ${moment.utc().valueOf()})
+            insert into groups_chats (send_by, message, type_message, media, group_id, inserted_at) values ( ?, ?, ?, ?, ?, ?)
             `;
 
             db.query(
-                `select users_chats.token_firebase from users_chats join users_groups_chats on users_groups_chats.user_chat_id = users_chats.id where users_groups_chats.group_id = ? and users_chats.id != ?`, [room, username], function (err, resp) {
+                `select users_chats.token_firebase from users_chats join users_groups_chats on users_groups_chats.user_chat_id = users_chats.id where users_groups_chats.group_id = ? and users_chats.id != ?`, [room, username],
+                function (err, resp) {
                     let tokens = []
                     if (err) {
                         console.log(err)
-                    } else { 
+                    } else {
                         console.log(resp)
                         resp.forEach((el) => {
                             if (el.token_firebase) {
@@ -173,7 +177,7 @@ io.on('connection', socket => {
                         try {
                             db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
                                 const registrationTokens = tokens;
-    
+
                                 const message = {
                                     notification: {
                                         title: res_sender[0].name,
@@ -181,16 +185,16 @@ io.on('connection', socket => {
                                     },
                                     tokens: registrationTokens,
                                 };
-    
+
                                 admin.messaging().sendMulticast(message)
-                                .then((response) => {
-                                    console.log(response.successCount + ' messages were sent successfully');
-                                    console.log(response)
-    
-                                    if(!response.responses[0].success) {
-                                        console.log(response.responses[0].error)
-                                    }
-                                });
+                                    .then((response) => {
+                                        console.log(response.successCount + ' messages were sent successfully');
+                                        console.log(response)
+
+                                        if (!response.responses[0].success) {
+                                            console.log(response.responses[0].error)
+                                        }
+                                    });
                             })
                         } catch (error) {
                             console.log(error)
@@ -199,12 +203,12 @@ io.on('connection', socket => {
                     }
                 })
 
-            db.query(query, function (err, res) {
+            db.query(query, [ username, msg, type, media, room, moment.utc().valueOf() ], function (err, res) {
                 db.query(`select user_chat_id from users_groups_chats where group_id = ? `, room, function (err, resp) {
                     // member group 
                     // const member = resp.map((el) => `pm${el.id}`) 
                     resp.forEach((el) => {
-                        io.to(`pm${el.user_chat_id}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                        io.to(`pm${el.user_chat_id}`).emit('message', formatMessage(username, username, msg, type, media, null, room, room))
                     })
                     // emit to the room and room user itself
                     // io.to(room).emit('message', formatMessage(username, username, msg, null, room, room))
@@ -222,13 +226,31 @@ io.on('connection', socket => {
                 // jika tidak ada chat sebelumnya maka
 
                 if (res.length === 0) {
-                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
-                    db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ?`, [username, targetId], function (err, v_room) {
+                        // Validasi if exist room
+                        if (v_room.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${username}', '${targetId}')`)
+                        }
+                    })
+
+                    db.query(`select * from users_personal_chats where user_chat_id = ? and id_target = ?`, [targetId, username], function (err, v_room) {
+                        // Validasi if exist room
+                        if (v_room.length === 0) {
+                            db.query(`insert into users_personal_chats (user_chat_id, id_target) values ('${targetId}', '${username}')`)
+                        }
+                    })
+
                     // jika tidak ada history chat maka buat query untuk insert data baru
                     query = `
-                        insert into personal_chats (send_by, message, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${targetId}', '${room}', ${moment.utc().valueOf()})
+                        insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
                     `;
-                    db.query(query, function (err, res) {
+                    
+                    db.query(query, [username, msg, type, media, targetId, room, moment.utc().valueOf()] , function (err, res) {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log(res)
+                        }
                         // emit to the room and room user itself
                         io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
                     })
@@ -249,41 +271,48 @@ io.on('connection', socket => {
                     })
                     // jika ada chat sebelumnya select query
                     query = `
-                            insert into personal_chats (send_by, message, target_id, id_relasi, inserted_at) values ('${username}', '${msg}', '${targetId}', '${res[0].id_relasi}', ${moment.utc().valueOf()})
+                            insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
                         `;
-                    db.query(query, function (err, res) {
+                    db.query(query, [ username, msg, type, media, targetId, res[0].id_relasi, moment.utc().valueOf() ] , function (err, res) {
                         // emit to the room and room user itself
 
-                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log(res)
+                        }
+                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, type, media, null, room, room))
                     })
                 }
-                
+
                 db.query(`select token_firebase from users_chats where id = ? limit 1`, targetId, function (err, res_token) {
                     // jika tidak ada chat
-                    if(!err) {
+                    if (!err) {
                         try {
                             db.query(`select name from users_chats where id = ? limit 1`, username, function (err, res_sender) {
                                 const registrationTokens = [
                                     res_token[0].token_firebase
                                 ];
 
-                                const message = {
-                                    notification: {
-                                        title: res_sender[0].name,
-                                        body: msg
-                                    },
-                                    tokens: registrationTokens,
-                                };
-        
-                                admin.messaging().sendMulticast(message)
-                                .then((response) => {
-                                    console.log(response.successCount + ' messages were sent successfully');
-                                    console.log(response)
+                                if (res_token[0].token_firebase) {
+                                    const message = {
+                                        notification: {
+                                            title: res_sender[0].name,
+                                            body: msg
+                                        },
+                                        tokens: registrationTokens,
+                                    };
+    
+                                    admin.messaging().sendMulticast(message)
+                                    .then((response) => {
+                                        console.log(response.successCount + ' messages were sent successfully');
+                                        console.log(response)
 
-                                    if(!response.responses[0].success) {
-                                        console.log(response.responses[0].error)
-                                    }
-                                });
+                                        if (!response.responses[0].success) {
+                                            console.log(response.responses[0].error)
+                                        }
+                                    });
+                                }
                             })
                         } catch (error) {
                             console.log(error)
@@ -292,8 +321,6 @@ io.on('connection', socket => {
                 })
             })
         }
-
-        // Eksekusi ke Firebase
 
     })
 
