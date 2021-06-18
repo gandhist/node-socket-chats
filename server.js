@@ -342,6 +342,6 @@ app.use(bodyParser.urlencoded({
 }))
 app.use('/api/v1', router)
 
-const PORT = 5000 || process.env.PORT;
+const PORT = 3000 || process.env.PORT;
 
 server.listen(PORT, () => console.log(`server running on port ${PORT}`));
