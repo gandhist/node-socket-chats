@@ -12,6 +12,16 @@ const list = (req, res) => {
         if (err) {
             res.send(err);
         }
+
+        resp = resp.map(value => {
+            if (!value.last_message || value.last_message == '') {
+                let filler = value.filename ?? ''
+                value.last_message = filler 
+            }
+            delete value.filename
+            return value
+        })
+
         res.status(200).json({
             message: "group list!",
             data: resp
