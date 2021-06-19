@@ -53,7 +53,7 @@ Chats.group_load = function (group, limit, result) {
         limit = 0
     }
     const a = dbConn.query(`
-        SELECT a.send_by, b.name AS sender_name, a.message, a.type_message, a.media, a.group_id as room_id, a.inserted_at AS time FROM groups_chats a
+        SELECT a.send_by, b.name AS sender_name, a.message, a.type_message, a.media, a.filename, a.group_id as room_id, a.inserted_at AS time FROM groups_chats a
         INNER JOIN users_chats b ON a.send_by = b.id
         WHERE a.group_id = ? ORDER BY a.inserted_at DESC LIMIT 10 OFFSET ?
     `, [group, limit], function (err, res) {
@@ -82,6 +82,7 @@ Chats.pc_load = function (sender_id, target_id, limit, result) {
             b.name AS sender_name,
             a.message,
             a.type_message,
+            a.filename,
             a.media,
             a.id_relasi as room_id,
             a.inserted_at AS time

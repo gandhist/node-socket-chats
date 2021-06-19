@@ -53,7 +53,8 @@ const image = async (req, res) => {
                         message: {
                             uri :uri, 
                             donwload_uri :uploading[0].metadata.mediaLink,
-                            type: uploading[0].metadata.contentType
+                            type: uploading[0].metadata.contentType,
+                            filename: filename
                         }
                     });
                 }
@@ -122,7 +123,8 @@ const document = async (req, res) => {
                     message: {
                         uri :uri, 
                         donwload_uri :uploading[0].metadata.mediaLink,
-                        type: uploading[0].metadata.contentType
+                        type: uploading[0].metadata.contentType,
+                        filename: filename
                     }
                 });
             }

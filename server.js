@@ -148,6 +148,7 @@ io.on('connection', socket => {
         tipe,
         type,
         media,
+        filename,
         targetId
     }) => {
         // save chat to db
@@ -155,7 +156,7 @@ io.on('connection', socket => {
         if (tipe === 'group') {
 
             query = `
-            insert into groups_chats (send_by, message, type_message, media, group_id, inserted_at) values ( ?, ?, ?, ?, ?, ?)
+            insert into groups_chats (send_by, message, type_message, media, filename, group_id, inserted_at) values ( ?, ?, ?, ?, ?, ?)
             `;
 
             db.query(
@@ -203,7 +204,7 @@ io.on('connection', socket => {
                     }
                 })
 
-            db.query(query, [ username, msg, type, media, room, moment.utc().valueOf() ], function (err, res) {
+            db.query(query, [ username, msg, type, media, filename, room, moment.utc().valueOf() ], function (err, res) {
                 db.query(`select user_chat_id from users_groups_chats where group_id = ? `, room, function (err, resp) {
                     // member group 
                     // const member = resp.map((el) => `pm${el.id}`) 
@@ -242,10 +243,10 @@ io.on('connection', socket => {
 
                     // jika tidak ada history chat maka buat query untuk insert data baru
                     query = `
-                        insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
+                        insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
                     `;
                     
-                    db.query(query, [username, msg, type, media, targetId, room, moment.utc().valueOf()] , function (err, res) {
+                    db.query(query, [username, msg, type, media, filename, targetId, room, moment.utc().valueOf()] , function (err, res) {
                         if (err) {
                             console.log(err)
                         } else {
@@ -271,9 +272,9 @@ io.on('connection', socket => {
                     })
                     // jika ada chat sebelumnya select query
                     query = `
-                            insert into personal_chats (send_by, message, type_message, media, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
+                            insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
                         `;
-                    db.query(query, [ username, msg, type, media, targetId, res[0].id_relasi, moment.utc().valueOf() ] , function (err, res) {
+                    db.query(query, [ username, msg, type, media, filename, targetId, res[0].id_relasi, moment.utc().valueOf() ] , function (err, res) {
                         // emit to the room and room user itself
 
                         if (err) {
@@ -342,6 +343,6 @@ app.use(bodyParser.urlencoded({
 }))
 app.use('/api/v1', router)
 
-const PORT = 5000 || process.env.PORT;
+const PORT = 3000 || process.env.PORT;
 
 server.listen(PORT, () => console.log(`server running on port ${PORT}`));
