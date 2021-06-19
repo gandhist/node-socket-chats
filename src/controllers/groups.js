@@ -15,7 +15,7 @@ const list = (req, res) => {
 
         resp = resp.map(value => {
             if (!value.last_message || value.last_message == '') {
-                let filler = value.filename ?? ''
+                let filler = value.filename ? value.filename : ''
                 value.last_message = filler 
             }
             delete value.filename
