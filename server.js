@@ -156,7 +156,7 @@ io.on('connection', socket => {
         if (tipe === 'group') {
 
             query = `
-            insert into groups_chats (send_by, message, type_message, media, filename, group_id, inserted_at) values ( ?, ?, ?, ?, ?, ?)
+            insert into groups_chats (send_by, message, type_message, media, filename, group_id, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
             `;
 
             db.query(
@@ -243,7 +243,7 @@ io.on('connection', socket => {
 
                     // jika tidak ada history chat maka buat query untuk insert data baru
                     query = `
-                        insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
+                        insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?, ?)
                     `;
                     
                     db.query(query, [username, msg, type, media, filename, targetId, room, moment.utc().valueOf()] , function (err, res) {
@@ -272,7 +272,7 @@ io.on('connection', socket => {
                     })
                     // jika ada chat sebelumnya select query
                     query = `
-                            insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?)
+                            insert into personal_chats (send_by, message, type_message, media, filename, target_id, id_relasi, inserted_at) values ( ?, ?, ?, ?, ?, ?, ?, ?)
                         `;
                     db.query(query, [ username, msg, type, media, filename, targetId, res[0].id_relasi, moment.utc().valueOf() ] , function (err, res) {
                         // emit to the room and room user itself
