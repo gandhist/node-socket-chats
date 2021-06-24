@@ -253,7 +253,7 @@ io.on('connection', socket => {
                             console.log(res)
                         }
                         // emit to the room and room user itself
-                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, null, room, room))
+                        io.to(room).to(`pm${targetId}`).emit('message', formatMessage(username, username, msg, type, media, filename, room , room, moment.utc().valueOf()))
                     })
                 } else {
                     // jika ada chat sebelumnya, maka check ada di user personal atau tidak
