@@ -3,7 +3,7 @@
 
 Read the documentation for API:
 
-[Documentation](https://github.com/zo0r/react-native-push-notification/blob/master/CHANGELOG.md)
+[Documentation](https://documenter.getpostman.com/view/8574990/TzedgjGq)
 # node-socket-chats
 
 npm install
