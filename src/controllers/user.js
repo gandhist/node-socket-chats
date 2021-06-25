@@ -160,10 +160,89 @@ const getToken = (req, res) => {
     })
 }
 
+// get profile by id
+const getProfileById = (req, res) => {
+    let { id } = req.params;
+    if (typeof id == 'undefined') {
+        id = req.user.id
+    }
+
+    UserModel.getById(id, (err, resp) => {
+        if (err) {
+            return res.send(err);
+        }
+        return res.status(200).json({
+            message: "Data ditemukan",
+            data: resp
+        });
+    });
+}
+
+// update profile by id auth by userid
+const update = (req, res) => {
+    const {id} = req.user
+    const {name, email, no_hp, about, picture} = req.body
+    const data = {
+        name, email, no_hp, about, picture
+    };
+    // validasi
+    UserModel.update(id, data, (err, resp) => {
+        if (err) {
+            return res.send(err);
+        }
+        if (resp.affectedRows === 1) {
+            res.status(200).json({
+                status: true,
+                message: 'Data berhasil diperbarui'
+            });
+        }
+    });
+}
+
+// change password
+const changePassword = (req, res) => {
+    const {id} = req.user
+    const {password} = req.body
+    if(typeof password == 'undefined'){
+        return res.status(422).send({
+            status: true,
+            message: 'Password cannot empty'
+        });
+    }
+
+    if(password.length < 8 ){
+        return res.status(422).send({
+            status: true,
+            message: 'Password max 8 character'
+        });
+    }
+
+    // hash password
+    const newPassword = bcrypt.hashSync(password, saltRounds);
+
+    // validasi
+    UserModel.changePassword(id, newPassword, password, (err, resp) => {
+        if (err) {
+            return res.send(err);
+        }
+        if (resp.affectedRows === 1) {
+            res.status(200).json({
+                status: true,
+                message: 'Password berhasil diperbarui'
+            });
+        }
+    });
+
+
+    
+}
 
 module.exports = {
     login,
     register,
     getToken,
-    setToken
+    setToken,
+    getProfileById,
+    update,
+    changePassword
 }

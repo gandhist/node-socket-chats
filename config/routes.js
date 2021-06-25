@@ -16,6 +16,10 @@ router.post('/lazyChat/:tipe/:id', authenticateToken, chatController.lazy_list)
 router.post('/getMeta', authenticateToken, chatController.getMeta)
 router.get('/contacts', authenticateToken, contactController.getAll)
 
+router.put('/profile', authenticateToken, userController.update)
+router.put('/changePassword', authenticateToken, userController.changePassword)
+router.get('/profile/:id?', authenticateToken, userController.getProfileById)
+
 router.post('/uploads/image',authenticateToken, uploadController.image)
 router.post('/uploads/document',authenticateToken, uploadController.document)
 

@@ -75,4 +75,36 @@ User.getTokenFirebase = function (id, result) {
     })
 }
 
+User.getById = function (id, result) {
+    dbConn.query(`select id, name, email, no_hp, about, picture from users_chats where id = ? limit 1`, id, function (err, res) {
+        if (err) {
+            result(err, null)
+        } else {
+            result(null, res)
+        }
+    })
+}
+
+User.update = function (id, data, result) {
+    dbConn.query(`update users_chats set name = ?, email = ?, no_hp = ?, about = ?, picture = ? where id = ?`, 
+    [data.name, data.email, data.no_hp, data.about, data.picture, id], function (err, res) {
+        if (err) {
+            result(err, null)
+        } else {
+            result(null, res)
+        }
+    })
+}
+
+User.changePassword = function (id, password, hint, result) {
+    dbConn.query(`update users_chats set password = ?, hint = ? where id = ?`, 
+    [password, hint, id], function (err, res) {
+        if (err) {
+            result(err, null)
+        } else {
+            result(null, res)
+        }
+    })
+}
+
 module.exports = User
