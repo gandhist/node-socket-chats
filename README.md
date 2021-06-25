@@ -1,3 +1,9 @@
+
+## 🎉 Read API Documentations ! 🎉
+
+Read the documentation for API:
+
+[Documentation](https://github.com/zo0r/react-native-push-notification/blob/master/CHANGELOG.md)
 # node-socket-chats
 
 npm install

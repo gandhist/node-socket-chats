@@ -18,6 +18,7 @@ router.get('/contacts', authenticateToken, contactController.getAll)
 
 router.put('/profile', authenticateToken, userController.update)
 router.put('/changePassword', authenticateToken, userController.changePassword)
+router.put('/changePhoto', authenticateToken, userController.changePhoto)
 router.get('/profile/:id?', authenticateToken, userController.getProfileById)
 
 router.post('/uploads/image',authenticateToken, uploadController.image)

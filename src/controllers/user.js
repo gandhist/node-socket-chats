@@ -1,10 +1,17 @@
 const UserModel = require('../models/users')
+const fs = require('fs');
+const db = require("../../config/db.config");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const dotenv = require('dotenv');
 // get config vars
+const {Storage} = require('@google-cloud/storage');
+
 dotenv.config();
+
+// Instantiate a storage client
+const storage = new Storage({ keyFilename: __dirname + "/../../" +process.env.GCP_JSON_FILE, projectId: process.env.GCP_PROJECT_ID });
 
 const login = (req, res) => {
     if (!req.body.username || !req.body.password) {
@@ -237,6 +244,78 @@ const changePassword = (req, res) => {
     
 }
 
+// update profile by id auth by userid
+const changePhoto = async (req, res) => {
+    
+    const user = req.user;
+    try {
+        if(!req.files) {
+            return res.status(400).send({
+                status: false,
+                errors: 'No file uploaded'
+            });
+        } else {
+            const {picture} = req.files;
+
+            if (picture === null || typeof picture === 'undefined') {
+                return res.status(401).send({
+                    status: false,
+                    errors: 'picture field not found'
+                });
+            } 
+            
+            let extension = picture.name.split('.')
+            extension = extension[extension.length - 1]
+            let tipe_picture = picture.mimetype.split('/')[0]
+            
+            if (tipe_picture == 'image') {
+                let filename = "Picture_" + user.id + "_" + new Date().valueOf() + "." + extension
+                let desti = __dirname + "/../../tmp/" + filename
+                picture.mv(desti)
+                let uploading = await storage.bucket('csi-absensi').upload(desti, {
+                    destination: "chat/profile/" + filename,
+                    resumable:false 
+                });
+                fs.unlinkSync(desti)
+
+                if (uploading) {
+                    let uri = "https://storage.googleapis.com/" + uploading[0].metadata.bucket + "/" + uploading[0].metadata.name
+                    query = `update users_chats set picture = ? where id = ?`;
+                    db.query(query, [uri, user.id], (err, resp) => {
+                        if (err) {
+                            res.send(err);
+                        }
+                        if (resp.affectedRows === 1) {
+                            return res.send({
+                                status: true,
+                                message: {
+                                    uri :uri, 
+                                    donwload_uri :uploading[0].metadata.mediaLink,
+                                    type: uploading[0].metadata.contentType,
+                                    filename: filename
+                                }
+                            });
+                        }
+                    });                    
+                }
+
+            } else {
+                return res.status(401).send({
+                    status: false,
+                    errors: 'File is not a valid image'
+                });
+            }
+
+        }
+    } catch (err) {
+        console.log(err)
+        return res.status(500).send({
+            status: false,
+            errors: 'Fail to upload image'
+        });
+    }
+}
+
 module.exports = {
     login,
     register,
@@ -244,5 +323,6 @@ module.exports = {
     setToken,
     getProfileById,
     update,
-    changePassword
+    changePassword,
+    changePhoto
 }
