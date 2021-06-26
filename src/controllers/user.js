@@ -22,7 +22,7 @@ const login = (req, res) => {
     }
 
     // cek user in table 
-    UserModel.getByEmail(req.body.username, function (errs, ress) {
+    UserModel.getByUsername(req.body.username, function (errs, ress) {
         if (errs) {
             console.log(errs)
             res.send(errs);
@@ -77,7 +77,7 @@ const register = (req, res) => {
     }
 
     // validasi
-    const listValidasiRegister = ['name', 'email', 'no_hp', 'tipe_user', 'password'];
+    const listValidasiRegister = ['name', 'email', 'no_hp', 'tipe_user', 'username', 'password'];
     const checkEmptyForm = _validasi(req, listValidasiRegister)
     if (checkEmptyForm.length > 0) {
         return res.status(422).send({
@@ -87,44 +87,77 @@ const register = (req, res) => {
         });
     }
 
-    // else {
-    const password = bcrypt.hashSync(req.body.password, saltRounds);
-    const newUser = new UserModel({
-        ...req.body,
-        hint: req.body.password,
-        password: password
-    });
-    UserModel.register(newUser, function (err, user) {
-        if (err) {
-            return res.send(err);
+    // check email
+    UserModel.getByEmail(req.body.email, (errEmails, emails) => {
+        // jika error query get email
+        if (errEmails) {
+            return res.send(errEmails);
         }
-        // generate token
-        const token = jwt.sign({
-            exp: Math.floor(Date.now() / 1000) + (3600 * (60 * 400)), // 4tahun expired time
-            id: user,
-            name: req.body.name,
-            tipe_user: req.body.tipe_user,
-            email: req.body.email,
-            no_hp: req.body.no_hp,
-        }, process.env.TOKEN_SECRET)
-        // update registered user to get jwt
-        UserModel.updateJwt({
-            id: user,
-            token: token
-        }, function (errs, ress) {
-            if (errs) {
-                res.send(errs);
+        // jika email terdaftar > 0
+        if(emails.length > 0){
+            return res.status(422).send({
+                status: false,
+                message: 'Alamat email sudah terdaftar!',
+                errors: req.body.email
+            });
+        }
+
+        // validasi username
+        UserModel.getByUsername(req.body.username, (errUsername, usernames) => {
+            // jika error query get usernames
+            if (errUsername) {
+                return res.send(errUsername);
             }
-            if (ress.affectedRows === 1) {
-                res.status(200).json({
-                    status: true,
-                    message: 'Registrasi berhasil'
+            // jika username terdaftar > 0
+            if(usernames.length > 0){
+                return res.status(422).send({
+                    status: false,
+                    message: 'Username sudah terdaftar!',
+                    errors: req.body.username
                 });
             }
-        })
-        // res.status(200).json(user);
-    })
-    // }
+
+            // store user register
+            const password = bcrypt.hashSync(req.body.password, saltRounds);
+            const newUser = new UserModel({
+                ...req.body,
+                hint: req.body.password,
+                password: password
+            });
+            UserModel.register(newUser, function (err, user) {
+                if (err) {
+                    return res.send(err);
+                }
+                // generate token
+                const token = jwt.sign({
+                    exp: Math.floor(Date.now() / 1000) + (3600 * (60 * 400)), // 4tahun expired time
+                    id: user,
+                    name: req.body.name,
+                    tipe_user: req.body.tipe_user,
+                    email: req.body.email,
+                    no_hp: req.body.no_hp,
+                }, process.env.TOKEN_SECRET)
+                // update registered user to get jwt
+                UserModel.updateJwt({
+                    id: user,
+                    token: token
+                }, function (errs, ress) {
+                    if (errs) {
+                        res.send(errs);
+                    }
+                    if (ress.affectedRows === 1) {
+                        res.status(200).json({
+                            status: true,
+                            message: 'Registrasi berhasil'
+                        });
+                    }
+                })
+                // res.status(200).json(user);
+            })
+            
+        });
+    });
+
 }
 
 const setToken = (req, res) => {

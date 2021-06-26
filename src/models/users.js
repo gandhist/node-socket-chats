@@ -8,6 +8,7 @@ let User = function (user) {
     this.tipe_user = user.tipe_user
     this.hint = user.hint
     this.password = user.password
+    this.username = user.username
     this.token = user.token
     this.token_firebase = user.token_firebase
     this.picture = user.picture
@@ -77,6 +78,18 @@ User.getTokenFirebase = function (id, result) {
 
 User.getById = function (id, result) {
     dbConn.query(`select id, name, email, no_hp, about, picture from users_chats where id = ? limit 1`, id, function (err, res) {
+        if (err) {
+            result(err, null)
+        } else {
+            result(null, res)
+        }
+    })
+}
+
+
+// get by username
+User.getByUsername = function (id, result) {
+    dbConn.query(`select id, name, email, no_hp, tipe_user, token, password, picture from users_chats where username = ? limit 1`, id, function (err, res) {
         if (err) {
             result(err, null)
         } else {
