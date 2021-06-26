@@ -221,9 +221,9 @@ const getProfileById = (req, res) => {
 // update profile by id auth by userid
 const update = (req, res) => {
     const {id} = req.user
-    const {name, email, no_hp, about, picture} = req.body
+    const {name, email, no_hp, about} = req.body
     const data = {
-        name, email, no_hp, about, picture
+        name, email, no_hp, about
     };
     // validasi
     UserModel.update(id, data, (err, resp) => {

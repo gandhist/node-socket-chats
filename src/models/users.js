@@ -99,8 +99,8 @@ User.getByUsername = function (id, result) {
 }
 
 User.update = function (id, data, result) {
-    dbConn.query(`update users_chats set name = ?, email = ?, no_hp = ?, about = ?, picture = ? where id = ?`, 
-    [data.name, data.email, data.no_hp, data.about, data.picture, id], function (err, res) {
+    dbConn.query(`update users_chats set name = ?, email = ?, no_hp = ?, about = ? where id = ?`, 
+    [data.name, data.email, data.no_hp, data.about, id], function (err, res) {
         if (err) {
             result(err, null)
         } else {
