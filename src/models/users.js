@@ -11,7 +11,7 @@ let User = function (user) {
     this.username = user.username
     this.token = user.token
     this.token_firebase = user.token_firebase
-    this.picture = user.picture
+    // this.picture = user.picture
 }
 
 
