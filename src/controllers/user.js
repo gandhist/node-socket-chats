@@ -200,6 +200,17 @@ const getToken = (req, res) => {
     })
 }
 
+const deleteToken = (req, res) => {
+    UserModel.deleteTokenFirebase(req.user.id, (err, resp) => {
+        if (err) {
+            return res.send(err);
+        }
+        return res.status(200).json({
+            message: "Token Firebase Deleted"
+        });
+    })
+}
+
 // get profile by id
 const getProfileById = (req, res) => {
     let { id } = req.params;
@@ -354,6 +365,7 @@ module.exports = {
     register,
     getToken,
     setToken,
+    deleteToken,
     getProfileById,
     update,
     changePassword,

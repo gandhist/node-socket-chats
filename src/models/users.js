@@ -76,6 +76,16 @@ User.getTokenFirebase = function (id, result) {
     })
 }
 
+User.deleteTokenFirebase = function (id, result) {
+    dbConn.query(`update users_chats set token_firebase = NULL where id = ? limit 1`, id, function (err, res) {
+        if (err) {
+            result(err, null)
+        } else {
+            result(null, res)
+        }
+    })
+}
+
 User.getById = function (id, result) {
     dbConn.query(`select id, name, email, no_hp, about, picture from users_chats where id = ? limit 1`, id, function (err, res) {
         if (err) {

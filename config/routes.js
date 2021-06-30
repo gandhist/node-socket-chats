@@ -26,6 +26,7 @@ router.post('/uploads/document',authenticateToken, uploadController.document)
 
 router.get('/tokenFirebase', authenticateToken, userController.getToken)
 router.post('/tokenFirebase', authenticateToken, userController.setToken)
+router.delete('/tokenFirebase', authenticateToken, userController.deleteToken)
 
 
 module.exports = router
