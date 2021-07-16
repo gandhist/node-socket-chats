@@ -9,6 +9,7 @@ const router = express.Router()
 
 
 router.post('/login', userController.login)
+router.post('/forcedLogin', userController.forcedLogin)
 router.post('/register', userController.register)
 router.get('/groupList', authenticateToken, groupController.list)
 router.get('/getChat/:tipe/:id', authenticateToken, chatController.list)
