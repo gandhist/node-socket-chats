@@ -44,6 +44,58 @@ const login = (req, res) => {
                 })
             } else {
                 delete ress[0].password
+
+                if (ress[0].token_firebase) {
+                    return res.status(401).send({
+                        status: false,
+                        message: "akun telah login di perangkat lain",
+                        data: ress[0]
+                    });                   
+                }
+
+                return res.status(200).send({
+                    status: true,
+                    message: "berhasil login!",
+                    data: ress[0]
+                });
+            }
+        }
+    })
+
+}
+
+const forcedLogin = (req, res) => {
+    if (!req.body.username || !req.body.password) {
+        return res.status(422).send({
+            error: 'error',
+            message: 'username dan password tidak boleh kosong'
+        })
+    }
+
+    // cek user in table 
+    UserModel.getByUsername(req.body.username, function (errs, ress) {
+        if (errs) {
+            console.log(errs)
+            res.send(errs);
+        }
+
+        if (ress && ress.length === 0) {
+            return res.status(422).send({
+                status: false,
+                message: 'username tidak ditemukan'
+            })
+        } else if (ress.length > 0) {
+            const cekPassword = bcrypt.compareSync(req.body.password, ress[0].password);
+
+            if (!cekPassword) {
+                // salah
+                res.status(422).send({
+                    status: false,
+                    message: 'password salah'
+                })
+            } else {
+                delete ress[0].password
+
                 return res.status(200).send({
                     status: true,
                     message: "berhasil login!",
@@ -362,6 +414,7 @@ const changePhoto = async (req, res) => {
 
 module.exports = {
     login,
+    forcedLogin,
     register,
     getToken,
     setToken,
