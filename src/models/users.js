@@ -99,7 +99,7 @@ User.getById = function (id, result) {
 
 // get by username
 User.getByUsername = function (id, result) {
-    dbConn.query(`select id, name, email, no_hp, tipe_user, token, password, picture from users_chats where username = ? limit 1`, id, function (err, res) {
+    dbConn.query(`select id, name, email, no_hp, tipe_user, token, token_firebase, password, picture from users_chats where username = ? limit 1`, id, function (err, res) {
         if (err) {
             result(err, null)
         } else {

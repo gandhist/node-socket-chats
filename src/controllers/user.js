@@ -44,14 +44,15 @@ const login = (req, res) => {
                 })
             } else {
                 delete ress[0].password
-
                 if (ress[0].token_firebase) {
+                    delete ress[0].token_firebase
+
                     return res.status(401).send({
                         status: false,
-                        message: "akun telah login di perangkat lain",
-                        data: ress[0]
+                        message: "akun telah login di perangkat lain"
                     });                   
                 }
+                delete ress[0].token_firebase
 
                 return res.status(200).send({
                     status: true,
